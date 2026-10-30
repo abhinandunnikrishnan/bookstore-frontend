@@ -1,10 +1,39 @@
-import React from "react";
+import React, { useRef } from "react";
 import Header from "../components/Header";
 import { FaLocationPin } from "react-icons/fa6";
 import { FaPaperPlane, FaPhoneAlt } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
+import { ToastContainer, toast } from 'react-toastify';
+import emailjs from '@emailjs/browser';
 
 function Contact() {
+  const form = useRef();
+
+  const sendEmail = (e) => {
+    e.preventDefault();
+  const {name,email,message}=form.current
+  if(name.value && email.value && message.value){
+    emailjs
+      .sendForm(import.meta.env.VITE_SERVICE_ID,import.meta.env.VITE_TEMPLATE_ID , form.current, {
+        publicKey: import.meta.env.VITE_PUBLIC_KEY
+      })
+      .then(
+        () => {
+          console.log('SUCCESS!');
+          toast.success("Thank You for contaacting us.. Our TEam will Get back to you soon!!!")
+          name.value=""
+          email.value=""
+          message.value=""
+        },
+        (error) => {
+          console.log('FAILED...', error);
+        },
+      );
+  }else{
+    toast.warning("Please fill the form completely")
+  }
+  }
+
   return (
     <>
       <Header />
@@ -43,18 +72,18 @@ function Contact() {
         <div className="md:grid grid-cols-2 items-center md:px-40 p-5 my-5 gap-10">
           <div className="bg-gray-200 p-5 text-center">
             <h1 className="font-semibold text-2xl">Send Us Message !</h1>
-            <form >
+            <form ref={form} onSubmit={sendEmail} >
               <div className="mb-5 my-10">
-                <input type="text" placeholder="Name" className="bg-white w-full p-2 rounded" />
+                <input name="name" type="text" placeholder="Name" className="bg-white w-full p-2 rounded" />
               </div>
               <div className="mb-5 my-10">
-                <input type="text" placeholder="Email" className="bg-white w-full p-2 rounded" />
+                <input name="email" type="text" placeholder="Email" className="bg-white w-full p-2 rounded" />
               </div>
               <div className="mb-5 my-10">
-                <input type="text" placeholder="Message" className="bg-white w-full p-2 rounded" />
+                <input name="message" type="text" placeholder="Message" className="bg-white w-full p-2 rounded" />
               </div>
               <div className="mb-5">
-                <button className="bg-black p-2 w-full text-white text-lg flex justify-center items-center rounded"><FaPaperPlane className="ms-2 me-2"/>Submit</button>
+                <button type="submit" className="bg-black p-2 w-full text-white text-lg flex justify-center items-center rounded"><FaPaperPlane className="ms-2 me-2"/>Submit</button>
               </div>
             </form>
           </div>
@@ -63,6 +92,8 @@ function Contact() {
           </div>
         </div>
       </div>
+      {/* toast container */}
+              <ToastContainer position='top-center' theme='colored' autoClose={3000}/>
     </>
   );
 }

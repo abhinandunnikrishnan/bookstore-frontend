@@ -1,7 +1,18 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { FaPowerOff } from 'react-icons/fa'
+import { useNavigate } from 'react-router-dom'
+import { routeContext } from '../../contextAPI/RouteGuard'
 
 function AdminHeader() {
+   const{role,setRole,authorisedUser,setAuthorisedUser} = useContext(routeContext)
+
+  const navigate =useNavigate()
+
+  const logout=()=>{
+    sessionStorage.clear()
+    setAuthorisedUser(false)
+    navigate('/')
+  }
   return (
     <>
     {/* header */}
@@ -10,7 +21,7 @@ function AdminHeader() {
         <img width={'50px'} height={'50px'} src="https://cdn.pixabay.com/photo/2017/01/31/00/09/books-2022464_1280.png" alt="icon" />
         <h1 className='text-2xl font-bold ms-2'>BOOKSTORE</h1>
       </div>
-      <button className='flex items-center px-3 py-2 bg-black text-white rounded border-black hover:bg-white hover:text-black'>Logout<FaPowerOff className='ms-2'/> </button>
+      <button onClick={logout} className='flex items-center px-3 py-2 bg-black text-white rounded border-black hover:bg-white hover:text-black'>Logout<FaPowerOff className='ms-2'/> </button>
     </div>
     {/* header marquee */}
     <div className='w-full p-3 bg-black text-white'>

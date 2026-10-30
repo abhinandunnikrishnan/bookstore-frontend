@@ -1,10 +1,37 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import { FaBackward, FaCamera, FaEye } from 'react-icons/fa'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
+import { buyBookApi, viewBookApi } from '../../services/allApi'
+import axiosInstance from '../../api/axiosInstance'
+import {loadStripe} from '@stripe/stripe-js';
 
 function View() {
   const [modal,setModal]=useState(false)
+  const{id}=useParams()
+  const[bookDetails,setBookDetails]=useState([])
+  console.log(bookDetails);
+
+  useEffect(()=>{
+    getBookDetails()
+  },[])
+
+  const getBookDetails=async()=>{
+    const result=await viewBookApi(id)
+    setBookDetails(result.data)
+  }
+
+  const makePayment= async()=>{
+    // console.log(import.meta.env.VITE_STRIPE_PK);
+    
+    // load stripe
+    const stripe = await loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
+    console.log(stripe);
+    // api call
+    const result=await buyBookApi(id)
+    window.location.href=result.data.checkOutURL
+  }
+  
   return (
     <>
       <Header/>
@@ -13,29 +40,29 @@ function View() {
 
         <div className='md:grid grid-cols-4 gap-x-10'>
             <div className='col-span-1'>
-              <img className='w-full' src="https://marketplace.canva.com/EAFaQMYuZbo/1/0/1003w/canva-brown-rusty-mystery-novel-book-cover-hG1QhA7BiBU.jpg" alt="book" />
+              <img className='w-full' src={bookDetails?.imageUrl} alt="book" />
             </div>
             {/* book details */}
             <div className='col-span-3'>
               <div className='flex justify-between mt-5 md:mt-0'>
-                <h3 className='text-2xl font-bold'>Title</h3>
+                <h3 className='text-2xl font-bold'>{bookDetails?.title}</h3>
                 <button onClick={()=>setModal(true)} className='text-gray-400'><FaEye/></button>
               </div>
-              <h2 className='text-blue-800 font-bold text-xl my-5'>Author</h2>
+              <h2 className='text-blue-800 font-bold text-xl my-5'>{bookDetails?.author}</h2>
               <div className='md:grid grid-cols-3 gap-5 my-10'>
-                <p className='font-bold'>Publisher</p>
-                <p className='font-bold'>Language</p>
-                <p className='font-bold'>No.Of Pages</p>
-                <p className='font-bold'>Category</p>
-                <p className='font-bold'>ISBN</p>
-                <p className='font-bold'>Seller</p>
+                <p className='font-bold'>{bookDetails?.publisher}</p>
+                <p className='font-bold'>{bookDetails?.language}</p>
+                <p className='font-bold'>{bookDetails?.pages}</p>
+                <p className='font-bold'>{bookDetails?.category}</p>
+                <p className='font-bold'>{bookDetails?.isbn}</p>
+                <p className='font-bold'>{bookDetails?.sellerMail}</p>
               </div>
               <div> 
-                <h4 className='font-bold text-lg'> Abstract</h4>
+                <h4 className='font-bold text-lg'> {bookDetails?.abstract}</h4>
               </div>
               <div className='flex justify-end'>
                 <Link to={'/books'} className='bg-blue-900 text-white p-2 font-black flex items-center'><FaBackward className='me-2'/>Back</Link>
-                <button className='bg-green-900 text-white font-black ms-5 p-2'>Buy $230</button>
+                <button onClick={makePayment} className='bg-green-900 text-white font-black ms-5 p-2'>Buy ₹{bookDetails?.price}</button>
               </div>
             </div>
         </div>
@@ -56,7 +83,14 @@ function View() {
                   <p className='text-blue-600 flex items-center'><FaCamera className='me-2'/> Camera clicks of the book</p>
                   <div className='md:flex flex-wrap my-4'>
                     {/* duplicate image */}
-                    <img className='md:w-75 w-25 md:me-2 md:mt-0 mb-3' src="https://marketplace.canva.com/EAFaQMYuZbo/1/0/1003w/canva-brown-rusty-mystery-novel-book-cover-hG1QhA7BiBU.jpg" alt="book" />
+                    {
+                      bookDetails?.uploadImages?.length>0?
+                      bookDetails?.uploadImages?.map(filename=>(
+                        <img className='md:w-75 w-25 md:me-2 md:mt-0 mb-3' src={`${axiosInstance.defaults.baseURL}/uploads/${filename}`} alt="book" />
+                      ))
+                      :
+                      <div className='my-5 font-semibold'>Image not available</div>
+                    }
                   </div>
                 </div>
               </div>

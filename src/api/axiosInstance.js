@@ -1,8 +1,23 @@
 import axios from 'axios'
 const axiosInstance=axios.create({
-    baseURL:"http://localhost:3000",
-    timeout:5000
+    baseURL:"https://bookstore-backend-jziz.onrender.com",
+    timeout:10000
 })
+
+// request interceptore : handling token append to header
+axiosInstance.interceptors.request.use(
+    (config)=>{
+        const token =sessionStorage.getItem("token")
+        if(token){
+            config.headers.Authorization = `Bearer ${token}`
+        }
+        return config
+    },
+    (error)=>{
+        return Promise.reject(error)
+    }
+)
+
 // response interceptors : handling global error
 axiosInstance.interceptors.response.use((response)=>{
     console.log("response received");

@@ -1,12 +1,16 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { FaEye, FaEyeSlash, FaUserAlt } from 'react-icons/fa'
 import { Link, useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from "yup"
-import { loginAPI, registerAPI } from '../services/allApi'
+import { googleLoginAPI, loginAPI, registerAPI } from '../services/allApi'
 import { ToastContainer, toast } from 'react-toastify';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from "jwt-decode";
+import { routeContext } from '../contextAPI/RouteGuard'
 
 function Auth({insideRegister}) {
+  const{role,setRole,authorisedUser,setAuthorisedUser} = useContext(routeContext)
   const navigate=useNavigate()
   const [togglePassword,setTogglePassword]=useState(false)
 
@@ -41,10 +45,13 @@ function Auth({insideRegister}) {
       toast.success("successfully logged in!!")
       sessionStorage.setItem("token",result.data.token)
       sessionStorage.setItem("user",JSON.stringify(result.data.user))
+      setAuthorisedUser(true)
       setTimeout(() => {
         if(result.data.user.role=="admin"){
+          setRole("admin")
           navigate("/admin")
         }else{
+          setRole("user")
           navigate("/")
         }
       }, 2500);
@@ -63,6 +70,31 @@ function Auth({insideRegister}) {
       toast.error(result)
     }
     navigate("/login")
+  }
+
+  const handleGoogleLogin=async (credentialResponse)=>{
+    console.log("inside google login");
+    const {email,name,picture} =jwtDecode(credentialResponse.credential)
+    console.log(email,name,picture);
+    // api call
+    const result=await googleLoginAPI({username:name,email,password:"googlePassword,picture"})
+    if(result.status==200){
+      toast.success("Login succcessfull")
+      sessionStorage.setItem("token",result.data.token)
+      sessionStorage.setItem("user",JSON.stringify( result.data.user))
+      setAuthorisedUser(true)
+      setTimeout(()=>{
+        if(result.data.user.role=="admin"){
+          setRole("admin")
+          navigate('/admin')
+        }else{
+          setRole("user")
+          navigate("/")
+        }
+      },2500)
+    }
+    
+    
   }
 
   return (
@@ -125,7 +157,14 @@ function Auth({insideRegister}) {
               <div className='my-5 text-center'>
                 <p>------------------or------------------</p>
                 <div className='mt-2 flex justify-center items-center w-full'>
-                  Google Authentication
+                  <GoogleLogin
+                    onSuccess={credentialResponse => {
+                      handleGoogleLogin(credentialResponse)
+                    }}
+                    onError={() => {
+                      console.log('Login Failed');
+                    }}
+                  />
                 </div>
               </div>
             }
